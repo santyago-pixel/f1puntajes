@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Score Tracker</title>
+    <link href="styles.css" rel="stylesheet" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Track scores for a group of people throughout the year" />
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <h1>Score Tracker</h1>
+        <p class="subtitle">Tracking scores throughout the year</p>
+      </header>
+
+      <div id="loading" class="loading">Loading scores...</div>
+      <div id="error" class="error" hidden></div>
+
+      <section id="standings-section" hidden>
+        <h2>Current Standings</h2>
+        <div class="standings" id="standings"></div>
+      </section>
+
+      <section id="chart-section" hidden>
+        <h2>Score Over Time</h2>
+        <div class="chart-wrapper">
+          <canvas id="scoreChart"></canvas>
+        </div>
+      </section>
+
+      <section id="table-section" hidden>
+        <h2>Full Score History</h2>
+        <div class="table-wrapper">
+          <table id="scoreTable">
+            <thead id="tableHead"></thead>
+            <tbody id="tableBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <footer>
+        <p>Data loaded from <code>data/scores.csv</code> &mdash; update the CSV to refresh scores.</p>
+      </footer>
+    </div>
+
+    <script src="app.js"></script>
+  </body>
+</html>
