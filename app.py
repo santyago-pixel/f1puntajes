@@ -1,4 +1,4 @@
-# app.py - Versión corregida: safe rerun para entornos donde st.experimental_rerun no existe
+# app.py - Versión limpia: sin pegado ni botones, sin sidebar, colores aplicados
 import os
 import csv
 from io import StringIO
@@ -62,42 +62,10 @@ def inject_css(file_name="style.css"):
             css = f.read()
         st.markdown(f"<style>{css}</style>", unsafe_allow_html=True)
     else:
-        st.warning("style.css no encontrado en la raíz. Subí style.css para aplicar el tema.")
+        # minimal fallback, but no sidebar allowed per request
+        st.error("style.css no encontrado en la raíz. Subí style.css para aplicar el tema.")
 
 inject_css("style.css")
-
-# ----------------- safe rerun helper -----------------
-def safe_rerun():
-    """
-    Intenta st.experimental_rerun() si está disponible.
-    Si no, marca session_state['_needs_rerun'] y llama st.stop() para finalizar la ejecución actual.
-    En el siguiente run la app consumirá la bandera y continuará mostrando los datos pegados.
-    """
-    try:
-        rerun = getattr(st, "experimental_rerun", None)
-        if callable(rerun):
-            rerun()
-        else:
-            # marcar y detener
-            st.session_state["_needs_rerun"] = True
-            st.stop()
-    except Exception:
-        # último recurso: marcar y detener
-        st.session_state["_needs_rerun"] = True
-        st.stop()
-
-# ----------------- Session state para paste-on-demand y rerun flag -----------------
-if "show_paste" not in st.session_state:
-    st.session_state.show_paste = False
-if "pasted_text" not in st.session_state:
-    st.session_state.pasted_text = ""
-if "_needs_rerun" not in st.session_state:
-    st.session_state["_needs_rerun"] = False
-
-# Si la bandera de rerun fue marcada en un run anterior, la limpiamos y seguimos.
-if st.session_state.get("_needs_rerun", False):
-    st.session_state["_needs_rerun"] = False
-    # no es necesario más acción: el contenido de pasted_text ya fue guardado en sesión
 
 # ----------------- Layout: banner + container -----------------
 st.markdown('<div class="top-banner"><div class="container"><header><h1>F1 tabla de posiciones</h1></header></div></div>', unsafe_allow_html=True)
@@ -112,21 +80,12 @@ def load_scores_file(path=DATA_PATH):
 
 df = load_scores_file(DATA_PATH)
 
-# ----------------- Mensaje informativo en la página (sin sidebar) -----------------
-st.markdown('<div class="muted">Para persistir cambios en la web, subí un CSV (CSV UTF-8, comma delimited) al repo en GitHub. Usa el botón al final para pegar desde Excel y cargar en memoria.</div>', unsafe_allow_html=True)
+# ----------------- Informative note (in-page) -----------------
+st.markdown('<div class="muted">Para persistir cambios en la web, subí un CSV (CSV UTF-8, comma delimited) al repo en GitHub.</div>', unsafe_allow_html=True)
 
-# ----------------- Si hay pasted_text en sesión, procesar y notificar -----------------
-if st.session_state.pasted_text:
-    parsed = try_read_csv_from_text(st.session_state.pasted_text)
-    if parsed is not None:
-        df = parsed
-        st.success("Datos pegados cargados en memoria.")
-    else:
-        st.error("Los datos pegados no pudieron parsearse. Revisá el formato.")
-
-# ----------------- Validaciones y normalización -----------------
+# ----------------- Validate and normalize -----------------
 if df is None:
-    st.markdown('<div class="loading">No se pudo leer <code>data/scores.csv</code>. Subí el archivo al repo o pega datos usando el botón al final.</div>', unsafe_allow_html=True)
+    st.markdown('<div class="loading">No se pudo leer <code>data/scores.csv</code>. Subí el archivo al repo.</div>', unsafe_allow_html=True)
     st.markdown('</div>', unsafe_allow_html=True)
     st.stop()
 
@@ -155,11 +114,11 @@ for c in score_cols:
             pass
     df[c] = series.fillna(0)
 
-# ----------------- Prepare cumulative scores -----------------
+# ----------------- Cumulative scores -----------------
 scores = df.set_index(date_col)[score_cols].fillna(0).astype(float)
 cum = scores.cumsum()
 
-# ----------------- Chart (primero) -----------------
+# ----------------- Chart (first) -----------------
 st.markdown('<h2>Puntaje a lo largo del tiempo</h2>', unsafe_allow_html=True)
 if cum.shape[0] > 0:
     cum_reset = cum.reset_index().melt(id_vars=[date_col], var_name="Name", value_name="Cumulative")
@@ -176,7 +135,7 @@ if cum.shape[0] > 0:
 else:
     st.markdown('<div class="loading">No hay datos para graficar.</div>', unsafe_allow_html=True)
 
-# ----------------- Standings (arriba of historial) -----------------
+# ----------------- Standings (above history) -----------------
 st.markdown('<h2>Standings actuales</h2>', unsafe_allow_html=True)
 if cum.shape[0] == 0:
     st.markdown('<div class="loading">No hay registros para calcular standings.</div>', unsafe_allow_html=True)
@@ -204,7 +163,7 @@ else:
     list_html = '<ul class="standings-list">' + "\n".join(list_items) + '</ul>'
     st.markdown(list_html, unsafe_allow_html=True)
 
-# ----------------- Historial completo (tabla) -----------------
+# ----------------- Historial completo (table) -----------------
 st.markdown('<h2>Historial completo</h2>', unsafe_allow_html=True)
 
 def df_to_html_table_improved(df_in, date_col):
@@ -229,34 +188,11 @@ def df_to_html_table_improved(df_in, date_col):
             cells.append(cell)
         rows_html.append("<tr>" + "".join(cells) + "</tr>")
     tbody = "<tbody>" + "\n".join(rows_html) + "</tbody>"
-    table_html = f"<table>{thead}{tbody}</table>"
+    table_html = f"<table id=\"score-table\">{thead}{tbody}</table>"
     return f'<div class="table-wrapper">{table_html}</div>'
 
 table_html = df_to_html_table_improved(df, date_col)
 st.markdown(table_html, unsafe_allow_html=True)
-
-# ----------------- Paste-on-demand button at bottom -----------------
-st.markdown("<hr/>", unsafe_allow_html=True)
-if st.button("Editar / Pegar datos desde Excel"):
-    st.session_state.show_paste = True
-
-if st.session_state.show_paste:
-    st.markdown("""
-    <div style="margin-top:0.5rem;margin-bottom:0.6rem;">
-      <strong>O pega aquí datos copiados desde Excel (tabs o comas)</strong>
-      <div class="muted" style="margin-top:0.15rem;">Copiá incluyendo la fila de encabezado (Date, Nombre1, Nombre2...). Luego presioná "Cargar datos pegados".</div>
-    </div>
-    """, unsafe_allow_html=True)
-    pasted_area = st.text_area("", value=st.session_state.pasted_text, height=180, key="paste_area_final")
-    if st.button("Cargar datos pegados"):
-        raw = pasted_area or ""
-        parsed = try_read_csv_from_text(raw)
-        if parsed is not None:
-            # Guardar el texto en session_state y hacer rerun seguro
-            st.session_state.pasted_text = raw
-            safe_rerun()
-        else:
-            st.error("No se pudo parsear el texto pegado. Asegurate de incluir el header y copiar desde Excel (Ctrl+C).")
 
 # ----------------- Footer -----------------
 st.markdown("""
