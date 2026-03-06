@@ -1,4 +1,4 @@
-# app.py - Versión final corregida: F1 tabla de posiciones, gráfico antes de historial, paste-on-demand
+# app.py - Versión final ajustada: F1 tabla de posiciones, título blanco, tabla y standings con color de fechas, sin sidebar
 import os
 import csv
 from io import StringIO
@@ -85,18 +85,17 @@ def load_scores_file(path=DATA_PATH):
 
 df = load_scores_file(DATA_PATH)
 
-# ----------------- Sidebar minimal -----------------
-st.sidebar.header("Actualizar datos (prueba)")
-st.sidebar.info("Para persistir cambios: sube un CSV (CSV UTF-8, comma delimited) al repo en GitHub.\nUsa el botón al final para pegar desde Excel y cargar en memoria.")
+# ----------------- Mostrar mensaje informativo (en la página principal en lugar de sidebar) -----------------
+st.markdown('<div class="muted">Para persistir cambios en la web, subí un CSV (CSV UTF-8, comma delimited) al repo en GitHub. Usa el botón al final para pegar desde Excel y cargar en memoria.</div>', unsafe_allow_html=True)
 
-# ----------------- Si hay pasted_text en sesión, procesar -----------------
+# ----------------- Si hay pasted_text en sesión, procesar y notificar en la página -----------------
 if st.session_state.pasted_text:
     parsed = try_read_csv_from_text(st.session_state.pasted_text)
     if parsed is not None:
         df = parsed
-        st.sidebar.success("Datos pegados cargados en memoria.")
+        st.success("Datos pegados cargados en memoria.")
     else:
-        st.sidebar.error("Los datos pegados no pudieron parsearse. Revisá el formato.")
+        st.error("Los datos pegados no pudieron parsearse. Revisá el formato.")
 
 # ----------------- Validaciones y normalización -----------------
 if df is None:
@@ -119,7 +118,6 @@ for c in score_cols:
     series = pd.to_numeric(df[c], errors="coerce")
     na_ratio = series.isna().sum() / max(1, len(series))
     if na_ratio > 0.3:
-        # Quitar separador de miles y convertir coma decimal a punto de forma robusta
         temp = df[c].astype(str).str.replace(".", "", regex=False)
         temp = temp.str.replace(",", ".", regex=False)
         try:
@@ -134,7 +132,7 @@ for c in score_cols:
 scores = df.set_index(date_col)[score_cols].fillna(0).astype(float)
 cum = scores.cumsum()
 
-# ----------------- Chart (ahora primero) -----------------
+# ----------------- Chart (primero) -----------------
 st.markdown('<h2>Puntaje a lo largo del tiempo</h2>', unsafe_allow_html=True)
 if cum.shape[0] > 0:
     cum_reset = cum.reset_index().melt(id_vars=[date_col], var_name="Name", value_name="Cumulative")
