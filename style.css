@@ -9,7 +9,7 @@
 :root{
   --brand-red: #b91c1c;       /* rojo principal */
   --brand-red-deep: #7a0f0f;  /* rojo profundo para banner */
-  --muted-gray: #6b7280;
+  --muted-gray: #6b7280;      /* color usado para fechas y ahora para textos de tablas */
   --text-strong: #0b1220;     /* texto principal, oscuro */
   --bg-page: #ffffff;
   --card-bg: #f8fafc;
@@ -24,7 +24,7 @@ body {
   line-height: 1.6;
 }
 
-/* Top banner similar al look de la imagen */
+/* Top banner similar to the look of the image */
 .top-banner {
   background: linear-gradient(90deg, var(--brand-red-deep), #6f1010);
   padding: 28px 0;
@@ -39,7 +39,7 @@ body {
   padding: 1.25rem;
 }
 
-/* Header: title */
+/* Header: title inside banner is white */
 header {
   display: flex;
   align-items: center;
@@ -51,17 +51,11 @@ h1 {
   font-size: 2.25rem;
   font-weight: 800;
   margin: 0;
-  color: #ffffff; /* title inside banner is white */
+  color: #ffffff; /* Título en blanco */
   letter-spacing: -0.5px;
 }
 
-/* If header is shown outside banner (we keep the banner above), provide alternate title style */
-.header-outside {
-  color: var(--text-strong);
-  background: none;
-}
-
-/* Section titles (dark, legible) */
+/* Section titles */
 h2 {
   font-size: 1.15rem;
   font-weight: 800;
@@ -105,12 +99,12 @@ h2 {
   color: var(--muted-gray);
 }
 
-/* Name and score */
+/* Name and score: names use the same muted gray as dates */
 .standings-name {
   flex: 1;
   font-weight: 700;
   font-size: 1rem;
-  color: var(--text-strong);
+  color: var(--muted-gray); /* cambiado para coincidir con fechas */
 }
 .standings-score {
   font-weight: 800;
@@ -121,11 +115,11 @@ h2 {
 }
 
 /* subtle top-3 coloring */
-.standings-top1::before { color: #b45309; } /* gold-ish */
+.standings-top1::before { color: #b45309; }
 .standings-top2::before { color: #64748b; }
 .standings-top3::before { color: #9a3412; }
 
-/* Chart wrapper (clean card) */
+/* Chart wrapper */
 .chart-wrapper {
   background: var(--card-bg);
   border: 1px solid rgba(11,18,32,0.06);
@@ -179,18 +173,23 @@ tbody tr:hover td {
   background: rgba(11,18,32,0.03);
 }
 
-/* First column (dates) */
+/* First column (dates) color */
 tbody td:first-child {
   font-weight: 700;
+  color: var(--muted-gray); /* color de fechas */
+}
+
+/* Make all text inside table body use the same muted gray tone for consistency (except numeric cells) */
+tbody td {
   color: var(--muted-gray);
 }
 
-/* Numeric cells */
+/* Numeric cells: right aligned and darker so numbers se leen bien */
 td.numeric {
   text-align: right;
   font-variant-numeric: tabular-nums;
   font-weight: 700;
-  color: var(--text-strong);
+  color: var(--text-strong); /* números más oscuros para legibilidad */
 }
 
 /* Footer */
