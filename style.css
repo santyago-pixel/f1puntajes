@@ -7,62 +7,68 @@
 }
 
 :root{
-  --brand-red: #b91c1c;       /* rojo principal */
-  --brand-red-deep: #7a0f0f;  /* rojo profundo para banner */
-  --muted-gray: #6b7280;      /* color usado para fechas y ahora para textos de tablas */
-  --text-strong: #0b1220;     /* texto principal, oscuro */
+  --brand-red-deep: #7a0f0f;
+  --brand-red: #b91c1c;
+  --muted-gray: #6b7280;
+  --text-strong: #0b1220;
   --bg-page: #ffffff;
   --card-bg: #f8fafc;
 }
 
-/* Page */
+/* Base */
 body {
   margin: 0;
   padding: 0;
   font-family: "Inter UI", "Inter", system-ui, -apple-system, sans-serif;
   background: var(--bg-page);
   color: var(--text-strong);
-  line-height: 1.6;
 }
 
-/* Banner + container */
+/* Banner */
 .top-banner {
   background: linear-gradient(90deg, var(--brand-red-deep), #6f1010);
   padding: 28px 0;
-  margin-bottom: 18px;
-  box-shadow: 0 2px 8px rgba(10,10,10,0.04);
+  margin-bottom: 24px;
 }
+
 .container {
   max-width: 1100px;
   margin: 0 auto;
   padding: 1.25rem;
 }
 
-/* Title in banner: white */
-header { display:flex; align-items:center; }
-h1 {
-  font-size: 2.25rem;
+/* Título blanco forzado */
+.top-banner h1 {
+  font-size: 2.3rem;
   font-weight: 800;
   margin: 0;
-  color: #ffffff; /* Título en blanco */
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
   letter-spacing: -0.5px;
 }
 
-/* Section titles */
+/* Secciones */
 h2 {
   font-size: 1.15rem;
   font-weight: 800;
-  margin: 0.9rem 0 0.6rem 0;
+  margin: 1.2rem 0 0.8rem 0;
   color: var(--text-strong);
 }
 
-/* Muted helper */
-.muted { color: var(--muted-gray); font-size:0.95rem; }
+/* Cards */
+.chart-wrapper,
+.table-wrapper {
+  background: var(--card-bg);
+  border: 1px solid rgba(11,18,32,0.06);
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 1.2rem;
+}
 
 /* Standings */
 .standings-list {
   list-style: none;
-  margin: 0 0 1rem 0;
+  margin: 0 0 1.2rem 0;
   padding: 0;
   background: var(--card-bg);
   border: 1px solid rgba(11,18,32,0.06);
@@ -70,95 +76,85 @@ h2 {
   overflow: hidden;
   counter-reset: rank;
 }
+
 .standings-item {
-  display:flex;
-  align-items:center;
-  padding:0.65rem 0.9rem;
-  border-bottom:1px solid rgba(11,18,32,0.04);
+  display: flex;
+  align-items: center;
+  padding: 0.65rem 1rem;
+  border-bottom: 1px solid rgba(11,18,32,0.05);
   counter-increment: rank;
 }
-.standings-item:last-child { border-bottom:none; }
+
+.standings-item:last-child {
+  border-bottom: none;
+}
+
 .standings-item::before {
   content: counter(rank) ".";
-  min-width:2.2rem;
-  font-weight:700;
-  font-size:0.98rem;
+  min-width: 2rem;
+  font-weight: 700;
   color: var(--muted-gray);
 }
-/* Name uses muted-gray (same as dates) */
+
+/* Nombre mismo color que fechas */
 .standings-name {
-  flex:1;
-  font-weight:700;
-  font-size:1rem;
+  flex: 1;
+  font-weight: 700;
   color: var(--muted-gray) !important;
 }
+
+/* Puntaje en rojo */
 .standings-score {
-  font-weight:800;
-  font-size:1rem;
+  font-weight: 800;
   color: var(--brand-red);
-  min-width:3.2rem;
-  text-align:right;
+  text-align: right;
 }
 
-/* Chart & table cards */
-.chart-wrapper, .table-wrapper {
-  background: var(--card-bg);
-  border: 1px solid rgba(11,18,32,0.06);
-  border-radius: 8px;
-  padding: 14px;
-  margin-bottom: 1rem;
-}
-
-/* Table visuals */
+/* Tabla */
 table {
-  width:100%;
-  border-collapse:collapse;
-  font-size:0.95rem;
-  color: var(--text-strong);
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95rem;
 }
+
 thead th {
-  position: sticky;
-  top:0;
-  background: linear-gradient(180deg,#ffffff,#fbfdff);
-  padding:0.75rem 0.9rem;
-  text-align:left;
-  font-weight:800;
-  color: var(--text-strong);
-  border-bottom:1px solid rgba(11,18,32,0.06);
-  white-space:nowrap;
+  padding: 0.75rem 0.9rem;
+  text-align: left;
+  font-weight: 800;
+  border-bottom: 1px solid rgba(11,18,32,0.06);
 }
+
 tbody td {
-  padding:0.6rem 0.9rem;
-  border-bottom:1px solid rgba(11,18,32,0.04);
-  white-space:nowrap;
-  /* default body text color set to muted-gray for non-numeric cells */
+  padding: 0.6rem 0.9rem;
+  border-bottom: 1px solid rgba(11,18,32,0.04);
   color: var(--muted-gray) !important;
 }
+
+/* Fechas */
 tbody td:first-child {
-  font-weight:700;
-  color: var(--muted-gray) !important; /* dates */
+  font-weight: 700;
+  color: var(--muted-gray) !important;
 }
-/* numeric cells darker for legibility */
+
+/* Números más oscuros */
 td.numeric {
-  text-align:right;
-  font-variant-numeric: tabular-nums;
-  font-weight:700;
+  text-align: right;
+  font-weight: 700;
   color: var(--text-strong) !important;
 }
 
-/* make sure pandas-generated table styles don't override these */
-#score-table, #score-table * { background: transparent !important; border: none !important; }
+tbody tr:nth-child(even) td {
+  background: rgba(11,18,32,0.015);
+}
 
-/* Alternate row and hover */
-tbody tr:nth-child(even) td { background: rgba(11,18,32,0.01); }
-tbody tr:hover td { background: rgba(11,18,32,0.03); }
+tbody tr:hover td {
+  background: rgba(11,18,32,0.03);
+}
 
 /* Footer */
-footer { margin-top:2rem; text-align:center; color:var(--muted-gray); font-size:0.9rem; }
-
-/* Responsive */
-@media (max-width:700px) {
-  .container { padding:0.6rem; }
-  h1 { font-size:1.5rem; }
-  .standings-score { font-size:0.95rem; }
+footer {
+  margin-top: 2rem;
+  text-align: center;
+  color: var(--muted-gray);
+  font-size: 0.9rem;
 }
