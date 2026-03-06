@@ -1,4 +1,4 @@
-# app.py - Versión final ajustada: F1 tabla de posiciones, título blanco, tabla y standings con color de fechas, sin sidebar
+# app.py - Versión corregida: safe rerun para entornos donde st.experimental_rerun no existe
 import os
 import csv
 from io import StringIO
@@ -66,11 +66,38 @@ def inject_css(file_name="style.css"):
 
 inject_css("style.css")
 
-# ----------------- Session state para paste-on-demand -----------------
+# ----------------- safe rerun helper -----------------
+def safe_rerun():
+    """
+    Intenta st.experimental_rerun() si está disponible.
+    Si no, marca session_state['_needs_rerun'] y llama st.stop() para finalizar la ejecución actual.
+    En el siguiente run la app consumirá la bandera y continuará mostrando los datos pegados.
+    """
+    try:
+        rerun = getattr(st, "experimental_rerun", None)
+        if callable(rerun):
+            rerun()
+        else:
+            # marcar y detener
+            st.session_state["_needs_rerun"] = True
+            st.stop()
+    except Exception:
+        # último recurso: marcar y detener
+        st.session_state["_needs_rerun"] = True
+        st.stop()
+
+# ----------------- Session state para paste-on-demand y rerun flag -----------------
 if "show_paste" not in st.session_state:
     st.session_state.show_paste = False
 if "pasted_text" not in st.session_state:
     st.session_state.pasted_text = ""
+if "_needs_rerun" not in st.session_state:
+    st.session_state["_needs_rerun"] = False
+
+# Si la bandera de rerun fue marcada en un run anterior, la limpiamos y seguimos.
+if st.session_state.get("_needs_rerun", False):
+    st.session_state["_needs_rerun"] = False
+    # no es necesario más acción: el contenido de pasted_text ya fue guardado en sesión
 
 # ----------------- Layout: banner + container -----------------
 st.markdown('<div class="top-banner"><div class="container"><header><h1>F1 tabla de posiciones</h1></header></div></div>', unsafe_allow_html=True)
@@ -85,10 +112,10 @@ def load_scores_file(path=DATA_PATH):
 
 df = load_scores_file(DATA_PATH)
 
-# ----------------- Mostrar mensaje informativo (en la página principal en lugar de sidebar) -----------------
+# ----------------- Mensaje informativo en la página (sin sidebar) -----------------
 st.markdown('<div class="muted">Para persistir cambios en la web, subí un CSV (CSV UTF-8, comma delimited) al repo en GitHub. Usa el botón al final para pegar desde Excel y cargar en memoria.</div>', unsafe_allow_html=True)
 
-# ----------------- Si hay pasted_text en sesión, procesar y notificar en la página -----------------
+# ----------------- Si hay pasted_text en sesión, procesar y notificar -----------------
 if st.session_state.pasted_text:
     parsed = try_read_csv_from_text(st.session_state.pasted_text)
     if parsed is not None:
@@ -225,8 +252,9 @@ if st.session_state.show_paste:
         raw = pasted_area or ""
         parsed = try_read_csv_from_text(raw)
         if parsed is not None:
+            # Guardar el texto en session_state y hacer rerun seguro
             st.session_state.pasted_text = raw
-            st.experimental_rerun()
+            safe_rerun()
         else:
             st.error("No se pudo parsear el texto pegado. Asegurate de incluir el header y copiar desde Excel (Ctrl+C).")
 
