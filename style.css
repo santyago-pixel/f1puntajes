@@ -6,197 +6,210 @@
   box-sizing: border-box;
 }
 
+:root{
+  --brand-red: #b91c1c;       /* rojo principal */
+  --brand-red-deep: #7a0f0f;  /* rojo profundo para banner */
+  --muted-gray: #6b7280;
+  --text-strong: #0b1220;     /* texto principal, oscuro */
+  --bg-page: #ffffff;
+  --card-bg: #f8fafc;
+}
+
 body {
   margin: 0;
   padding: 0;
   font-family: "Inter UI", "Inter", system-ui, -apple-system, sans-serif;
-  /* color de fondo oscuro pero menos contraste */
-  background: #0b1220; /* un poco más suave que el anterior */
-  color: #dbe7f5;      /* tono más cálido/menos saturado */
+  background: var(--bg-page);
+  color: var(--text-strong);
   line-height: 1.6;
 }
 
+/* Top banner similar al look de la imagen */
+.top-banner {
+  background: linear-gradient(90deg, var(--brand-red-deep), #6f1010);
+  padding: 28px 0;
+  margin-bottom: 18px;
+  box-shadow: 0 2px 8px rgba(10,10,10,0.04);
+}
+
+/* container width */
 .container {
   max-width: 1100px;
   margin: 0 auto;
-  padding: 2rem 1.5rem;
+  padding: 1.25rem;
 }
 
-/* Header */
+/* Header: title */
 header {
-  text-align: center;
-  margin-bottom: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 14px;
 }
+
 h1 {
   font-size: 2.25rem;
   font-weight: 800;
-  margin: 0 0 0.25rem 0;
-  /* degradado menos saturado */
-  background: linear-gradient(135deg, #60a5fa, #8b8cf8);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-.subtitle {
-  color: #a8b5c9;
   margin: 0;
-  font-size: 1rem;
+  color: #ffffff; /* title inside banner is white */
+  letter-spacing: -0.5px;
 }
 
-/* Titulos de seccion */
+/* If header is shown outside banner (we keep the banner above), provide alternate title style */
+.header-outside {
+  color: var(--text-strong);
+  background: none;
+}
+
+/* Section titles (dark, legible) */
 h2 {
   font-size: 1.15rem;
-  font-weight: 700;
-  margin: 1.75rem 0 0.8rem 0;
-  color: #c7d6ea;
+  font-weight: 800;
+  margin: 0.9rem 0 0.6rem 0;
+  color: var(--text-strong);
 }
 
-/* Small helpers */
+/* small helper text */
 .muted {
-  color: #97a6bf;
+  color: var(--muted-gray);
   font-size: 0.95rem;
 }
 
-/* Standings list (softer) */
+/* Standings list (clean, high contrast) */
 .standings-list {
   list-style: none;
   margin: 0 0 1rem 0;
   padding: 0;
-  background: rgba(255,255,255,0.03); /* mucho más suave */
-  border: 1px solid rgba(255,255,255,0.04);
-  border-radius: 0.65rem;
+  background: var(--card-bg);
+  border: 1px solid rgba(11,18,32,0.06);
+  border-radius: 8px;
   overflow: hidden;
   counter-reset: rank;
 }
 
-/* Item */
 .standings-item {
   display: flex;
   align-items: center;
-  padding: 0.6rem 1rem;
-  border-bottom: 1px solid rgba(255,255,255,0.02);
+  padding: 0.65rem 0.9rem;
+  border-bottom: 1px solid rgba(11,18,32,0.04);
   counter-increment: rank;
-  transition: background 0.12s ease;
 }
 
 .standings-item:last-child { border-bottom: none; }
-.standings-item:hover { background: rgba(255,255,255,0.02); }
 
-/* Rank number */
 .standings-item::before {
   content: counter(rank) ".";
   min-width: 2.2rem;
   font-weight: 700;
-  font-size: 0.95rem;
-  color: #8ea0b8;
+  font-size: 0.98rem;
+  color: var(--muted-gray);
 }
 
 /* Name and score */
 .standings-name {
   flex: 1;
-  font-weight: 600;
+  font-weight: 700;
   font-size: 1rem;
-  color: #e6eef9;
+  color: var(--text-strong);
 }
 .standings-score {
   font-weight: 800;
   font-size: 1rem;
-  /* color más legible sin gradientes fuertes */
-  color: #9bd1ff;
-  min-width: 3.5rem;
+  color: var(--brand-red);
+  min-width: 3.2rem;
   text-align: right;
 }
 
-/* Small badge for zero */
-.score-zero {
-  color: #93a3b8;
-  font-weight: 600;
-}
+/* subtle top-3 coloring */
+.standings-top1::before { color: #b45309; } /* gold-ish */
+.standings-top2::before { color: #64748b; }
+.standings-top3::before { color: #9a3412; }
 
-/* Chart wrapper: suavizar colores */
+/* Chart wrapper (clean card) */
 .chart-wrapper {
-  background: rgba(255,255,255,0.02);
-  border: 1px solid rgba(255,255,255,0.04);
-  border-radius: 0.65rem;
-  padding: 1rem;
+  background: var(--card-bg);
+  border: 1px solid rgba(11,18,32,0.06);
+  border-radius: 8px;
+  padding: 14px;
   margin-bottom: 1rem;
 }
 
-/* Table wrapper: menos contraste, mejor padding */
+/* Table wrapper */
 .table-wrapper {
   overflow-x: auto;
-  background: rgba(255,255,255,0.02);
-  border: 1px solid rgba(255,255,255,0.03);
-  border-radius: 0.65rem;
+  background: var(--card-bg);
+  border: 1px solid rgba(11,18,32,0.06);
+  border-radius: 8px;
   padding: 0.25rem;
 }
 
-/* Tabla en sí: fondo claro de celdas y mejor lectura */
+/* Table visuals */
 table {
   width: 100%;
   border-collapse: collapse;
   font-size: 0.95rem;
-  color: #d7e9ff;
+  color: var(--text-strong);
 }
 
-/* Encabezados */
 thead th {
   position: sticky;
   top: 0;
-  background: rgba(10,15,25,0.6);
-  padding: 0.7rem 0.9rem;
+  background: linear-gradient(180deg, #ffffff, #fbfdff);
+  padding: 0.75rem 0.9rem;
   text-align: left;
-  font-weight: 700;
-  color: #a9bedb;
-  border-bottom: 1px solid rgba(255,255,255,0.03);
+  font-weight: 800;
+  color: var(--text-strong);
+  border-bottom: 1px solid rgba(11,18,32,0.06);
   white-space: nowrap;
 }
 
-/* Filas y celdas */
 tbody td {
   padding: 0.6rem 0.9rem;
-  border-bottom: 1px solid rgba(255,255,255,0.02);
+  border-bottom: 1px solid rgba(11,18,32,0.04);
   white-space: nowrap;
-  font-variant-numeric: tabular-nums; /* ayuda a alinear números */
 }
 
-/* Alternar leve el fondo para filas para lectura */
+/* Alternate rows subtle */
 tbody tr:nth-child(even) td {
-  background: rgba(255,255,255,0.005);
+  background: rgba(11,18,32,0.01);
 }
 
-/* Hover fila */
+/* Hover */
 tbody tr:hover td {
-  background: rgba(255,255,255,0.015);
+  background: rgba(11,18,32,0.03);
 }
 
-/* Primera columna (fechas) con color más suave */
+/* First column (dates) */
 tbody td:first-child {
-  font-weight: 600;
-  color: #9fb2cc;
+  font-weight: 700;
+  color: var(--muted-gray);
 }
 
-/* Numeric column alignment (mejor lectura) */
+/* Numeric cells */
 td.numeric {
   text-align: right;
-  font-feature-settings: "tnum";
   font-variant-numeric: tabular-nums;
-  font-weight: 600;
-  color: #dff3ff;
+  font-weight: 700;
+  color: var(--text-strong);
 }
 
 /* Footer */
 footer {
   margin-top: 2rem;
   text-align: center;
-  color: #8f9fb6;
-  font-size: 0.85rem;
+  color: var(--muted-gray);
+  font-size: 0.9rem;
 }
 
-/* Responsive */
+/* Button area styling for paste area */
+.paste-area {
+  margin-top: 10px;
+  margin-bottom: 16px;
+}
+
+/* Responsive tweaks */
 @media (max-width: 700px) {
-  .container { padding: 1rem; }
-  h1 { font-size: 1.6rem; }
+  .container { padding: 0.6rem; }
+  h1 { font-size: 1.5rem; }
   .standings-score { font-size: 0.95rem; }
 }
