@@ -1,3 +1,4 @@
+# app.py - Versión actualizada: segunda columna = lugar/evento (no usada en cálculos)
 import os
 import csv
 from io import StringIO
@@ -17,7 +18,7 @@ def try_read_csv_from_text(raw_text):
         dialect = csv.Sniffer().sniff(sample, delimiters=[",", ";", "\t", "|"])
         sep = dialect.delimiter
     except Exception:
-        header_line = raw_text.splitlines()[0]
+        header_line = raw_text.splitlines()[0] if raw_text.splitlines() else ""
         counts = {",": header_line.count(","), ";": header_line.count(";"), "\t": header_line.count("\t"), "|": header_line.count("|")}
         sep = max(counts, key=counts.get)
     for s in [sep, ",", ";", "\t", "|"]:
@@ -25,8 +26,14 @@ def try_read_csv_from_text(raw_text):
             df = pd.read_csv(StringIO(raw_text), sep=s)
             if df.shape[1] > 1:
                 return df
-        except:
+        except Exception:
             continue
+    try:
+        df = pd.read_csv(StringIO(raw_text), delim_whitespace=True)
+        if df.shape[1] > 1:
+            return df
+    except Exception:
+        pass
     return None
 
 def try_read_csv(path):
@@ -37,91 +44,162 @@ def try_read_csv(path):
             with open(path, "r", encoding=enc) as f:
                 raw = f.read()
             return try_read_csv_from_text(raw)
-        except:
+        except Exception:
             continue
     return None
 
-# -------- Inject CSS --------
+# -------- Inject CSS (style.css must be in same folder) --------
 def inject_css(file_name="style.css"):
-    if os.path.exists(file_name):
-        with open(file_name) as f:
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    css_path = os.path.join(base_dir, file_name)
+    if os.path.exists(css_path):
+        with open(css_path, "r", encoding="utf-8") as f:
             st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
+    else:
+        # show minimal message in-page (no sidebar)
+        st.error("style.css no encontrado en la raíz. Subí style.css para aplicar el tema.")
 
-inject_css()
+inject_css("style.css")
 
-# -------- Layout --------
+# -------- Layout: banner + container --------
 st.markdown('<div class="top-banner"><div class="container"><h1>F1 tabla de posiciones</h1></div></div>', unsafe_allow_html=True)
 st.markdown('<div class="container">', unsafe_allow_html=True)
 
+# -------- Load CSV --------
 DATA_PATH = "data/scores.csv"
 df = try_read_csv(DATA_PATH)
 
 if df is None:
-    st.error("No se pudo leer data/scores.csv")
+    st.error("No se pudo leer data/scores.csv o el archivo no existe en la ruta data/scores.csv")
     st.stop()
 
+# Normalize columns and detect special columns:
 df.columns = df.columns.astype(str)
+if df.shape[1] < 2:
+    st.error("El CSV debe tener al menos dos columnas: Fecha y Lugar. Añadí columnas de puntaje después.")
+    st.stop()
+
 date_col = df.columns[0]
+location_col = df.columns[1]
+score_cols = df.columns[2:].tolist()  # a partir de la 3ra columna están los puntajes
+
+# Parse dates (assume dayfirst like dd/mm/YYYY)
 df[date_col] = pd.to_datetime(df[date_col], dayfirst=True, errors="coerce")
-df = df.sort_values(by=date_col)
+df = df.sort_values(by=date_col).reset_index(drop=True)
 
-score_cols = df.columns[1:]
+# Validate that location column is kept as-is (string)
+df[location_col] = df[location_col].astype(str)
 
-for c in score_cols:
-    df[c] = pd.to_numeric(df[c], errors="coerce").fillna(0)
+# If there are no score columns, warn (we will still show historial with date+location)
+if len(score_cols) == 0:
+    st.warning("No se detectaron columnas de puntaje (no hay columnas después de la segunda). Se mostrará el historial con Fecha y Lugar, pero no habrá standings ni gráfico.")
+else:
+    # Convert score columns to numeric robustly
+    for c in score_cols:
+        series = pd.to_numeric(df[c], errors="coerce")
+        na_ratio = series.isna().sum() / max(1, len(series))
+        if na_ratio > 0.3:
+            # intentar limpiar: quitar separador miles y cambiar coma decimal por punto
+            temp = df[c].astype(str).str.replace(".", "", regex=False)
+            temp = temp.str.replace(",", ".", regex=False)
+            try:
+                series2 = pd.to_numeric(temp, errors="coerce")
+                if series2.isna().sum() < series.isna().sum():
+                    series = series2
+            except Exception:
+                pass
+        df[c] = series.fillna(0)
 
-scores = df.set_index(date_col)[score_cols]
-cum = scores.cumsum()
+# Prepare cumulative and scores only if score_cols exist
+if len(score_cols) > 0:
+    scores = df.set_index(date_col)[score_cols].fillna(0).astype(float)
+    cum = scores.cumsum()
+else:
+    scores = pd.DataFrame()
+    cum = pd.DataFrame()
 
-# -------- Chart --------
+# -------- Chart (first) --------
 st.markdown("<h2>Puntaje a lo largo del tiempo</h2>", unsafe_allow_html=True)
+if cum.shape[0] > 0 and cum.shape[1] > 0:
+    cum_reset = cum.reset_index().melt(id_vars=[date_col], var_name="Name", value_name="Cumulative")
+    cum_reset[date_col] = pd.to_datetime(cum_reset[date_col])
+    chart = alt.Chart(cum_reset).mark_line().encode(
+        x=alt.X(date_col, title="Fecha", axis=alt.Axis(format='%Y-%m-%d')),
+        y=alt.Y("Cumulative", title="Puntos acumulados"),
+        color=alt.Color("Name:N", legend=alt.Legend(title="Participante")),
+        tooltip=[date_col, "Name", "Cumulative"]
+    ).properties(height=360)
+    st.markdown('<div class="chart-wrapper">', unsafe_allow_html=True)
+    st.altair_chart(chart, use_container_width=True)
+    st.markdown('</div>', unsafe_allow_html=True)
+else:
+    st.info("No hay datos de puntaje suficientes para generar el gráfico.")
 
-cum_reset = cum.reset_index().melt(id_vars=[date_col], var_name="Name", value_name="Cumulative")
-
-chart = alt.Chart(cum_reset).mark_line().encode(
-    x=date_col,
-    y="Cumulative",
-    color="Name",
-    tooltip=[date_col, "Name", "Cumulative"]
-).properties(height=360)
-
-st.markdown('<div class="chart-wrapper">', unsafe_allow_html=True)
-st.altair_chart(chart, use_container_width=True)
-st.markdown('</div>', unsafe_allow_html=True)
-
-# -------- Standings --------
+# -------- Standings (arriba del historial) --------
 st.markdown("<h2>Standings actuales</h2>", unsafe_allow_html=True)
+if cum.shape[0] == 0 or cum.shape[1] == 0:
+    st.info("No hay standings para mostrar (faltan columnas de puntaje).")
+else:
+    latest = cum.iloc[-1].sort_values(ascending=False)
+    list_items = []
+    for i, (name, pts) in enumerate(latest.items(), start=1):
+        safe_name = html.escape(str(name))
+        try:
+            pts_val = float(pts)
+            pts_text = str(int(pts_val)) if pts_val.is_integer() else str(round(pts_val, 2))
+        except Exception:
+            pts_text = str(pts)
+        safe_pts = html.escape(pts_text)
+        rank_class = "standings-item"
+        if i == 1:
+            rank_class += " standings-top1"
+        elif i == 2:
+            rank_class += " standings-top2"
+        elif i == 3:
+            rank_class += " standings-top3"
+        item_html = f'<li class="{rank_class}"><div class="standings-name">{safe_name}</div><div class="standings-score">{safe_pts}</div></li>'
+        list_items.append(item_html)
+    list_html = '<ul class="standings-list">' + "\n".join(list_items) + '</ul>'
+    st.markdown(list_html, unsafe_allow_html=True)
 
-latest = cum.iloc[-1].sort_values(ascending=False)
-
-items = []
-for i, (name, pts) in enumerate(latest.items(), start=1):
-    items.append(
-        f'<li class="standings-item"><div class="standings-name">{html.escape(str(name))}</div><div class="standings-score">{int(pts)}</div></li>'
-    )
-
-st.markdown('<ul class="standings-list">' + "\n".join(items) + "</ul>", unsafe_allow_html=True)
-
-# -------- Historial --------
+# -------- Historial completo (mostrar Fecha | Lugar | Scores...) --------
 st.markdown("<h2>Historial completo</h2>", unsafe_allow_html=True)
 
-def build_table(df):
-    df_copy = df.copy()
+def df_to_html_table_with_location(df_in, date_col, location_col, score_cols):
+    df_copy = df_in.copy()
+    # formato fecha legible
     df_copy[date_col] = df_copy[date_col].dt.strftime("%Y-%m-%d")
-    cols = df_copy.columns.tolist()
-    thead = "<thead><tr>" + "".join([f"<th>{c}</th>" for c in cols]) + "</tr></thead>"
-    rows = []
+    # construir header: fecha, lugar, luego nombres de columnas de puntaje
+    cols = [date_col, location_col] + score_cols
+    thead = "<thead><tr>" + "".join([f"<th>{html.escape(str(c))}</th>" for c in cols]) + "</tr></thead>"
+    rows_html = []
     for _, row in df_copy.iterrows():
         cells = []
-        for i, col in enumerate(cols):
-            if i == 0:
-                cells.append(f"<td>{row[col]}</td>")
-            else:
-                cells.append(f'<td class="numeric">{int(row[col])}</td>')
-        rows.append("<tr>" + "".join(cells) + "</tr>")
-    tbody = "<tbody>" + "\n".join(rows) + "</tbody>"
-    return f'<div class="table-wrapper"><table>{thead}{tbody}</table></div>'
+        # Fecha
+        cells.append(f"<td>{html.escape(str(row[date_col]))}</td>")
+        # Lugar (texto tal cual)
+        cells.append(f"<td>{html.escape(str(row[location_col]))}</td>")
+        # Puntajes
+        for sc in score_cols:
+            try:
+                v = float(row[sc])
+                cell_text = str(int(v)) if v.is_integer() else str(round(v, 2))
+            except Exception:
+                cell_text = html.escape(str(row[sc]))
+            cells.append(f'<td class="numeric">{cell_text}</td>')
+        rows_html.append("<tr>" + "".join(cells) + "</tr>")
+    tbody = "<tbody>" + "\n".join(rows_html) + "</tbody>"
+    table_html = f"<table id='score-table'>{thead}{tbody}</table>"
+    return f'<div class="table-wrapper">{table_html}</div>'
 
-st.markdown(build_table(df), unsafe_allow_html=True)
+table_html = df_to_html_table_with_location(df, date_col, location_col, score_cols)
+st.markdown(table_html, unsafe_allow_html=True)
+
+# -------- Footer --------
+st.markdown("""
+<footer>
+  <p>Hecho con Streamlit.</p>
+</footer>
+""", unsafe_allow_html=True)
 
 st.markdown("</div>", unsafe_allow_html=True)
