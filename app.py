@@ -1,15 +1,17 @@
-# app.py - Versión actualizada: segunda columna = lugar/evento (no usada en cálculos)
+# app.py - Standings en columnas de hasta 10 filas cada una (lado a lado)
 import os
 import csv
 from io import StringIO
 import html
+import math
+
 import pandas as pd
 import altair as alt
 import streamlit as st
 
 st.set_page_config(page_title="F1 tabla de posiciones", layout="wide")
 
-# -------- CSV robusto --------
+# -------- CSV robusto (lectura) --------
 def try_read_csv_from_text(raw_text):
     if not raw_text:
         return None
@@ -48,20 +50,17 @@ def try_read_csv(path):
             continue
     return None
 
-# -------- Inject CSS (style.css must be in same folder) --------
+# -------- Inject CSS --------
 def inject_css(file_name="style.css"):
     base_dir = os.path.dirname(os.path.abspath(__file__))
     css_path = os.path.join(base_dir, file_name)
     if os.path.exists(css_path):
         with open(css_path, "r", encoding="utf-8") as f:
             st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
-    else:
-        # show minimal message in-page (no sidebar)
-        st.error("style.css no encontrado en la raíz. Subí style.css para aplicar el tema.")
 
 inject_css("style.css")
 
-# -------- Layout: banner + container --------
+# -------- Layout --------
 st.markdown('<div class="top-banner"><div class="container"><h1>F1 tabla de posiciones</h1></div></div>', unsafe_allow_html=True)
 st.markdown('<div class="container">', unsafe_allow_html=True)
 
@@ -73,54 +72,44 @@ if df is None:
     st.error("No se pudo leer data/scores.csv o el archivo no existe en la ruta data/scores.csv")
     st.stop()
 
-# Normalize columns and detect special columns:
 df.columns = df.columns.astype(str)
-if df.shape[1] < 2:
-    st.error("El CSV debe tener al menos dos columnas: Fecha y Lugar. Añadí columnas de puntaje después.")
+if df.shape[1] < 3:
+    st.error("El CSV debe tener al menos tres columnas: Fecha, Lugar, y al menos un participante con puntaje.")
     st.stop()
 
 date_col = df.columns[0]
 location_col = df.columns[1]
-score_cols = df.columns[2:].tolist()  # a partir de la 3ra columna están los puntajes
+score_cols = df.columns[2:].tolist()
 
-# Parse dates (assume dayfirst like dd/mm/YYYY)
+# Parse dates
 df[date_col] = pd.to_datetime(df[date_col], dayfirst=True, errors="coerce")
 df = df.sort_values(by=date_col).reset_index(drop=True)
 
-# Validate that location column is kept as-is (string)
+# Normalize location as string
 df[location_col] = df[location_col].astype(str)
 
-# If there are no score columns, warn (we will still show historial with date+location)
-if len(score_cols) == 0:
-    st.warning("No se detectaron columnas de puntaje (no hay columnas después de la segunda). Se mostrará el historial con Fecha y Lugar, pero no habrá standings ni gráfico.")
-else:
-    # Convert score columns to numeric robustly
-    for c in score_cols:
-        series = pd.to_numeric(df[c], errors="coerce")
-        na_ratio = series.isna().sum() / max(1, len(series))
-        if na_ratio > 0.3:
-            # intentar limpiar: quitar separador miles y cambiar coma decimal por punto
-            temp = df[c].astype(str).str.replace(".", "", regex=False)
-            temp = temp.str.replace(",", ".", regex=False)
-            try:
-                series2 = pd.to_numeric(temp, errors="coerce")
-                if series2.isna().sum() < series.isna().sum():
-                    series = series2
-            except Exception:
-                pass
-        df[c] = series.fillna(0)
+# Normalize score columns numeric
+for c in score_cols:
+    series = pd.to_numeric(df[c], errors="coerce")
+    na_ratio = series.isna().sum() / max(1, len(series))
+    if na_ratio > 0.3:
+        temp = df[c].astype(str).str.replace(".", "", regex=False)
+        temp = temp.str.replace(",", ".", regex=False)
+        try:
+            series2 = pd.to_numeric(temp, errors="coerce")
+            if series2.isna().sum() < series.isna().sum():
+                series = series2
+        except Exception:
+            pass
+    df[c] = series.fillna(0)
 
-# Prepare cumulative and scores only if score_cols exist
-if len(score_cols) > 0:
-    scores = df.set_index(date_col)[score_cols].fillna(0).astype(float)
-    cum = scores.cumsum()
-else:
-    scores = pd.DataFrame()
-    cum = pd.DataFrame()
+# Prepare cumulative totals
+scores = df.set_index(date_col)[score_cols].fillna(0).astype(float)
+cum = scores.cumsum()
 
 # -------- Chart (first) --------
 st.markdown("<h2>Puntaje a lo largo del tiempo</h2>", unsafe_allow_html=True)
-if cum.shape[0] > 0 and cum.shape[1] > 0:
+if not cum.empty:
     cum_reset = cum.reset_index().melt(id_vars=[date_col], var_name="Name", value_name="Cumulative")
     cum_reset[date_col] = pd.to_datetime(cum_reset[date_col])
     chart = alt.Chart(cum_reset).mark_line().encode(
@@ -135,51 +124,63 @@ if cum.shape[0] > 0 and cum.shape[1] > 0:
 else:
     st.info("No hay datos de puntaje suficientes para generar el gráfico.")
 
-# -------- Standings (arriba del historial) --------
+# -------- Standings (multiple columns) --------
 st.markdown("<h2>Standings actuales</h2>", unsafe_allow_html=True)
-if cum.shape[0] == 0 or cum.shape[1] == 0:
-    st.info("No hay standings para mostrar (faltan columnas de puntaje).")
-else:
-    latest = cum.iloc[-1].sort_values(ascending=False)
-    list_items = []
-    for i, (name, pts) in enumerate(latest.items(), start=1):
-        safe_name = html.escape(str(name))
-        try:
-            pts_val = float(pts)
-            pts_text = str(int(pts_val)) if pts_val.is_integer() else str(round(pts_val, 2))
-        except Exception:
-            pts_text = str(pts)
-        safe_pts = html.escape(pts_text)
-        rank_class = "standings-item"
-        if i == 1:
-            rank_class += " standings-top1"
-        elif i == 2:
-            rank_class += " standings-top2"
-        elif i == 3:
-            rank_class += " standings-top3"
-        item_html = f'<li class="{rank_class}"><div class="standings-name">{safe_name}</div><div class="standings-score">{safe_pts}</div></li>'
-        list_items.append(item_html)
-    list_html = '<ul class="standings-list">' + "\n".join(list_items) + '</ul>'
-    st.markdown(list_html, unsafe_allow_html=True)
 
-# -------- Historial completo (mostrar Fecha | Lugar | Scores...) --------
+latest = cum.iloc[-1].sort_values(ascending=False)
+
+names = list(latest.index)
+points = list(latest.values.astype(float))
+total = len(names)
+if total == 0:
+    st.info("No hay standings disponibles.")
+else:
+    # chunk into groups of max 10
+    per_col = 10
+    cols = math.ceil(total / per_col)
+    chunks = []
+    for i in range(cols):
+        start = i * per_col
+        end = start + per_col
+        chunks.append([(start + j + 1, names[start + j], points[start + j]) for j in range(min(per_col, total - start))])
+
+    # Build HTML with columns side by side
+    html_cols = ['<div class="standings-columns">']
+    for chunk in chunks:
+        items = []
+        for rank, nm, pts in chunk:
+            safe_name = html.escape(str(nm))
+            try:
+                pts_val = float(pts)
+                pts_text = str(int(pts_val)) if pts_val.is_integer() else str(round(pts_val, 2))
+            except Exception:
+                pts_text = html.escape(str(pts))
+            item_html = (
+                f'<li class="standings-item">'
+                f'<div class="standings-rank">{rank}.</div>'
+                f'<div class="standings-name">{safe_name}</div>'
+                f'<div class="standings-score">{pts_text}</div>'
+                f'</li>'
+            )
+            items.append(item_html)
+        list_html = '<ul class="standings-list">' + "\n".join(items) + '</ul>'
+        html_cols.append(list_html)
+    html_cols.append('</div>')
+    st.markdown("\n".join(html_cols), unsafe_allow_html=True)
+
+# -------- Historial completo (Fecha | Lugar | scores) --------
 st.markdown("<h2>Historial completo</h2>", unsafe_allow_html=True)
 
 def df_to_html_table_with_location(df_in, date_col, location_col, score_cols):
     df_copy = df_in.copy()
-    # formato fecha legible
     df_copy[date_col] = df_copy[date_col].dt.strftime("%Y-%m-%d")
-    # construir header: fecha, lugar, luego nombres de columnas de puntaje
     cols = [date_col, location_col] + score_cols
     thead = "<thead><tr>" + "".join([f"<th>{html.escape(str(c))}</th>" for c in cols]) + "</tr></thead>"
     rows_html = []
     for _, row in df_copy.iterrows():
         cells = []
-        # Fecha
         cells.append(f"<td>{html.escape(str(row[date_col]))}</td>")
-        # Lugar (texto tal cual)
         cells.append(f"<td>{html.escape(str(row[location_col]))}</td>")
-        # Puntajes
         for sc in score_cols:
             try:
                 v = float(row[sc])
@@ -192,8 +193,7 @@ def df_to_html_table_with_location(df_in, date_col, location_col, score_cols):
     table_html = f"<table id='score-table'>{thead}{tbody}</table>"
     return f'<div class="table-wrapper">{table_html}</div>'
 
-table_html = df_to_html_table_with_location(df, date_col, location_col, score_cols)
-st.markdown(table_html, unsafe_allow_html=True)
+st.markdown(df_to_html_table_with_location(df, date_col, location_col, score_cols), unsafe_allow_html=True)
 
 # -------- Footer --------
 st.markdown("""
