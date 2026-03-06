@@ -15,6 +15,7 @@
   --card-bg: #f8fafc;
 }
 
+/* Page */
 body {
   margin: 0;
   padding: 0;
@@ -24,29 +25,21 @@ body {
   line-height: 1.6;
 }
 
-/* Top banner similar to the look of the image */
+/* Banner + container */
 .top-banner {
   background: linear-gradient(90deg, var(--brand-red-deep), #6f1010);
   padding: 28px 0;
   margin-bottom: 18px;
   box-shadow: 0 2px 8px rgba(10,10,10,0.04);
 }
-
-/* container width */
 .container {
   max-width: 1100px;
   margin: 0 auto;
   padding: 1.25rem;
 }
 
-/* Header: title inside banner is white */
-header {
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  gap: 14px;
-}
-
+/* Title in banner: white */
+header { display:flex; align-items:center; }
 h1 {
   font-size: 2.25rem;
   font-weight: 800;
@@ -63,13 +56,10 @@ h2 {
   color: var(--text-strong);
 }
 
-/* small helper text */
-.muted {
-  color: var(--muted-gray);
-  font-size: 0.95rem;
-}
+/* Muted helper */
+.muted { color: var(--muted-gray); font-size:0.95rem; }
 
-/* Standings list (clean, high contrast) */
+/* Standings */
 .standings-list {
   list-style: none;
   margin: 0 0 1rem 0;
@@ -80,47 +70,38 @@ h2 {
   overflow: hidden;
   counter-reset: rank;
 }
-
 .standings-item {
-  display: flex;
-  align-items: center;
-  padding: 0.65rem 0.9rem;
-  border-bottom: 1px solid rgba(11,18,32,0.04);
+  display:flex;
+  align-items:center;
+  padding:0.65rem 0.9rem;
+  border-bottom:1px solid rgba(11,18,32,0.04);
   counter-increment: rank;
 }
-
-.standings-item:last-child { border-bottom: none; }
-
+.standings-item:last-child { border-bottom:none; }
 .standings-item::before {
   content: counter(rank) ".";
-  min-width: 2.2rem;
-  font-weight: 700;
-  font-size: 0.98rem;
+  min-width:2.2rem;
+  font-weight:700;
+  font-size:0.98rem;
   color: var(--muted-gray);
 }
-
-/* Name and score: names use the same muted gray as dates */
+/* Name uses muted-gray (same as dates) */
 .standings-name {
-  flex: 1;
-  font-weight: 700;
-  font-size: 1rem;
-  color: var(--muted-gray); /* cambiado para coincidir con fechas */
+  flex:1;
+  font-weight:700;
+  font-size:1rem;
+  color: var(--muted-gray) !important;
 }
 .standings-score {
-  font-weight: 800;
-  font-size: 1rem;
+  font-weight:800;
+  font-size:1rem;
   color: var(--brand-red);
-  min-width: 3.2rem;
-  text-align: right;
+  min-width:3.2rem;
+  text-align:right;
 }
 
-/* subtle top-3 coloring */
-.standings-top1::before { color: #b45309; }
-.standings-top2::before { color: #64748b; }
-.standings-top3::before { color: #9a3412; }
-
-/* Chart wrapper */
-.chart-wrapper {
+/* Chart & table cards */
+.chart-wrapper, .table-wrapper {
   background: var(--card-bg);
   border: 1px solid rgba(11,18,32,0.06);
   border-radius: 8px;
@@ -128,87 +109,56 @@ h2 {
   margin-bottom: 1rem;
 }
 
-/* Table wrapper */
-.table-wrapper {
-  overflow-x: auto;
-  background: var(--card-bg);
-  border: 1px solid rgba(11,18,32,0.06);
-  border-radius: 8px;
-  padding: 0.25rem;
-}
-
 /* Table visuals */
 table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.95rem;
+  width:100%;
+  border-collapse:collapse;
+  font-size:0.95rem;
   color: var(--text-strong);
 }
-
 thead th {
   position: sticky;
-  top: 0;
-  background: linear-gradient(180deg, #ffffff, #fbfdff);
-  padding: 0.75rem 0.9rem;
-  text-align: left;
-  font-weight: 800;
+  top:0;
+  background: linear-gradient(180deg,#ffffff,#fbfdff);
+  padding:0.75rem 0.9rem;
+  text-align:left;
+  font-weight:800;
   color: var(--text-strong);
-  border-bottom: 1px solid rgba(11,18,32,0.06);
-  white-space: nowrap;
+  border-bottom:1px solid rgba(11,18,32,0.06);
+  white-space:nowrap;
 }
-
 tbody td {
-  padding: 0.6rem 0.9rem;
-  border-bottom: 1px solid rgba(11,18,32,0.04);
-  white-space: nowrap;
+  padding:0.6rem 0.9rem;
+  border-bottom:1px solid rgba(11,18,32,0.04);
+  white-space:nowrap;
+  /* default body text color set to muted-gray for non-numeric cells */
+  color: var(--muted-gray) !important;
 }
-
-/* Alternate rows subtle */
-tbody tr:nth-child(even) td {
-  background: rgba(11,18,32,0.01);
-}
-
-/* Hover */
-tbody tr:hover td {
-  background: rgba(11,18,32,0.03);
-}
-
-/* First column (dates) color */
 tbody td:first-child {
-  font-weight: 700;
-  color: var(--muted-gray); /* color de fechas */
+  font-weight:700;
+  color: var(--muted-gray) !important; /* dates */
 }
-
-/* Make all text inside table body use the same muted gray tone for consistency (except numeric cells) */
-tbody td {
-  color: var(--muted-gray);
-}
-
-/* Numeric cells: right aligned and darker so numbers se leen bien */
+/* numeric cells darker for legibility */
 td.numeric {
-  text-align: right;
+  text-align:right;
   font-variant-numeric: tabular-nums;
-  font-weight: 700;
-  color: var(--text-strong); /* números más oscuros para legibilidad */
+  font-weight:700;
+  color: var(--text-strong) !important;
 }
+
+/* make sure pandas-generated table styles don't override these */
+#score-table, #score-table * { background: transparent !important; border: none !important; }
+
+/* Alternate row and hover */
+tbody tr:nth-child(even) td { background: rgba(11,18,32,0.01); }
+tbody tr:hover td { background: rgba(11,18,32,0.03); }
 
 /* Footer */
-footer {
-  margin-top: 2rem;
-  text-align: center;
-  color: var(--muted-gray);
-  font-size: 0.9rem;
-}
+footer { margin-top:2rem; text-align:center; color:var(--muted-gray); font-size:0.9rem; }
 
-/* Button area styling for paste area */
-.paste-area {
-  margin-top: 10px;
-  margin-bottom: 16px;
-}
-
-/* Responsive tweaks */
-@media (max-width: 700px) {
-  .container { padding: 0.6rem; }
-  h1 { font-size: 1.5rem; }
-  .standings-score { font-size: 0.95rem; }
+/* Responsive */
+@media (max-width:700px) {
+  .container { padding:0.6rem; }
+  h1 { font-size:1.5rem; }
+  .standings-score { font-size:0.95rem; }
 }
