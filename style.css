@@ -10,206 +10,193 @@ body {
   margin: 0;
   padding: 0;
   font-family: "Inter UI", "Inter", system-ui, -apple-system, sans-serif;
-  background: #0f172a;
-  color: #e2e8f0;
+  /* color de fondo oscuro pero menos contraste */
+  background: #0b1220; /* un poco más suave que el anterior */
+  color: #dbe7f5;      /* tono más cálido/menos saturado */
   line-height: 1.6;
 }
 
 .container {
-  max-width: 960px;
+  max-width: 1100px;
   margin: 0 auto;
   padding: 2rem 1.5rem;
 }
 
+/* Header */
 header {
   text-align: center;
-  margin-bottom: 2.5rem;
+  margin-bottom: 2rem;
 }
-
 h1 {
-  font-size: 2.5rem;
+  font-size: 2.25rem;
   font-weight: 800;
   margin: 0 0 0.25rem 0;
-  background: linear-gradient(135deg, #38bdf8, #818cf8);
+  /* degradado menos saturado */
+  background: linear-gradient(135deg, #60a5fa, #8b8cf8);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 
 .subtitle {
-  color: #94a3b8;
+  color: #a8b5c9;
   margin: 0;
-  font-size: 1.1rem;
+  font-size: 1rem;
 }
 
+/* Titulos de seccion */
 h2 {
-  font-size: 1.25rem;
-  font-weight: 600;
-  margin: 2rem 0 1rem 0;
-  color: #cbd5e1;
+  font-size: 1.15rem;
+  font-weight: 700;
+  margin: 1.75rem 0 0.8rem 0;
+  color: #c7d6ea;
 }
 
-/* Loading & Error */
-.loading {
-  text-align: center;
-  padding: 3rem;
-  color: #94a3b8;
-  font-size: 1.1rem;
+/* Small helpers */
+.muted {
+  color: #97a6bf;
+  font-size: 0.95rem;
 }
 
-.error {
-  text-align: center;
-  padding: 1.5rem;
-  background: rgba(239, 68, 68, 0.15);
-  border: 1px solid rgba(239, 68, 68, 0.3);
-  border-radius: 0.75rem;
-  color: #fca5a5;
-  margin-bottom: 1.5rem;
-}
-
-/* Standings list */
+/* Standings list (softer) */
 .standings-list {
   list-style: none;
-  margin: 0;
+  margin: 0 0 1rem 0;
   padding: 0;
-  background: rgba(30, 41, 59, 0.8);
-  border: 1px solid rgba(148, 163, 184, 0.15);
-  border-radius: 0.75rem;
+  background: rgba(255,255,255,0.03); /* mucho más suave */
+  border: 1px solid rgba(255,255,255,0.04);
+  border-radius: 0.65rem;
   overflow: hidden;
-  margin-bottom: 1rem;
   counter-reset: rank;
 }
 
+/* Item */
 .standings-item {
   display: flex;
   align-items: center;
-  padding: 0.75rem 1.25rem;
-  border-bottom: 1px solid rgba(148, 163, 184, 0.08);
+  padding: 0.6rem 1rem;
+  border-bottom: 1px solid rgba(255,255,255,0.02);
   counter-increment: rank;
-  transition: background 0.15s ease;
+  transition: background 0.12s ease;
 }
 
-.standings-item:last-child {
-  border-bottom: none;
-}
+.standings-item:last-child { border-bottom: none; }
+.standings-item:hover { background: rgba(255,255,255,0.02); }
 
-.standings-item:hover {
-  background: rgba(56, 189, 248, 0.05);
-}
-
+/* Rank number */
 .standings-item::before {
   content: counter(rank) ".";
-  min-width: 2.5rem;
+  min-width: 2.2rem;
   font-weight: 700;
-  font-size: 1rem;
-  color: #64748b;
+  font-size: 0.95rem;
+  color: #8ea0b8;
 }
 
-.standings-top1::before {
-  color: #fbbf24;
-}
-
-.standings-top2::before {
-  color: #94a3b8;
-}
-
-.standings-top3::before {
-  color: #d97706;
-}
-
+/* Name and score */
 .standings-name {
   flex: 1;
   font-weight: 600;
   font-size: 1rem;
-  color: #f1f5f9;
+  color: #e6eef9;
 }
-
 .standings-score {
   font-weight: 800;
-  font-size: 1.1rem;
-  background: linear-gradient(135deg, #38bdf8, #818cf8);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  font-size: 1rem;
+  /* color más legible sin gradientes fuertes */
+  color: #9bd1ff;
+  min-width: 3.5rem;
+  text-align: right;
 }
 
-/* Chart */
+/* Small badge for zero */
+.score-zero {
+  color: #93a3b8;
+  font-weight: 600;
+}
+
+/* Chart wrapper: suavizar colores */
 .chart-wrapper {
-  background: rgba(30, 41, 59, 0.8);
-  border: 1px solid rgba(148, 163, 184, 0.15);
-  border-radius: 0.75rem;
-  padding: 1.5rem;
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(255,255,255,0.04);
+  border-radius: 0.65rem;
+  padding: 1rem;
   margin-bottom: 1rem;
 }
 
-/* Table */
+/* Table wrapper: menos contraste, mejor padding */
 .table-wrapper {
   overflow-x: auto;
-  background: rgba(30, 41, 59, 0.8);
-  border: 1px solid rgba(148, 163, 184, 0.15);
-  border-radius: 0.75rem;
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(255,255,255,0.03);
+  border-radius: 0.65rem;
+  padding: 0.25rem;
 }
 
+/* Tabla en sí: fondo claro de celdas y mejor lectura */
 table {
   width: 100%;
   border-collapse: collapse;
   font-size: 0.95rem;
+  color: #d7e9ff;
 }
 
+/* Encabezados */
 thead th {
   position: sticky;
   top: 0;
-  background: #1e293b;
-  padding: 0.85rem 1rem;
+  background: rgba(10,15,25,0.6);
+  padding: 0.7rem 0.9rem;
   text-align: left;
-  font-weight: 600;
-  color: #94a3b8;
-  border-bottom: 2px solid rgba(148, 163, 184, 0.2);
+  font-weight: 700;
+  color: #a9bedb;
+  border-bottom: 1px solid rgba(255,255,255,0.03);
   white-space: nowrap;
 }
 
+/* Filas y celdas */
 tbody td {
-  padding: 0.7rem 1rem;
-  border-bottom: 1px solid rgba(148, 163, 184, 0.08);
+  padding: 0.6rem 0.9rem;
+  border-bottom: 1px solid rgba(255,255,255,0.02);
   white-space: nowrap;
+  font-variant-numeric: tabular-nums; /* ayuda a alinear números */
 }
 
-tbody tr:last-child td {
-  border-bottom: none;
+/* Alternar leve el fondo para filas para lectura */
+tbody tr:nth-child(even) td {
+  background: rgba(255,255,255,0.005);
 }
 
-tbody tr:hover {
-  background: rgba(56, 189, 248, 0.05);
+/* Hover fila */
+tbody tr:hover td {
+  background: rgba(255,255,255,0.015);
 }
 
+/* Primera columna (fechas) con color más suave */
 tbody td:first-child {
-  font-weight: 500;
-  color: #94a3b8;
+  font-weight: 600;
+  color: #9fb2cc;
+}
+
+/* Numeric column alignment (mejor lectura) */
+td.numeric {
+  text-align: right;
+  font-feature-settings: "tnum";
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  color: #dff3ff;
 }
 
 /* Footer */
 footer {
-  margin-top: 3rem;
+  margin-top: 2rem;
   text-align: center;
-  color: #475569;
+  color: #8f9fb6;
   font-size: 0.85rem;
-}
-
-footer code {
-  background: rgba(30, 41, 59, 0.8);
-  padding: 0.15rem 0.4rem;
-  border-radius: 0.25rem;
-  font-size: 0.85rem;
-  color: #818cf8;
 }
 
 /* Responsive */
-@media (max-width: 600px) {
-  h1 {
-    font-size: 1.75rem;
-  }
-
-  .chart-wrapper {
-    padding: 1rem 0.5rem;
-  }
+@media (max-width: 700px) {
+  .container { padding: 1rem; }
+  h1 { font-size: 1.6rem; }
+  .standings-score { font-size: 0.95rem; }
 }
