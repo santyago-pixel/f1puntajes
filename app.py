@@ -1,4 +1,4 @@
-# app.py - Versión final: F1 tabla de posiciones, gráfico antes de historial, paste-on-demand
+# app.py - Versión final corregida: F1 tabla de posiciones, gráfico antes de historial, paste-on-demand
 import os
 import csv
 from io import StringIO
@@ -73,7 +73,6 @@ if "pasted_text" not in st.session_state:
     st.session_state.pasted_text = ""
 
 # ----------------- Layout: banner + container -----------------
-# Banner strip similar to the image (title white inside banner)
 st.markdown('<div class="top-banner"><div class="container"><header><h1>F1 tabla de posiciones</h1></header></div></div>', unsafe_allow_html=True)
 st.markdown('<div class="container">', unsafe_allow_html=True)
 
@@ -120,8 +119,9 @@ for c in score_cols:
     series = pd.to_numeric(df[c], errors="coerce")
     na_ratio = series.isna().sum() / max(1, len(series))
     if na_ratio > 0.3:
+        # Quitar separador de miles y convertir coma decimal a punto de forma robusta
         temp = df[c].astype(str).str.replace(".", "", regex=False)
-        temp = temp.str_replace(",", ".", regex=False) if hasattr(pd.Series.str, "replace") else temp.replace(",", ".")
+        temp = temp.str.replace(",", ".", regex=False)
         try:
             series2 = pd.to_numeric(temp, errors="coerce")
             if series2.isna().sum() < series.isna().sum():
