@@ -15,7 +15,7 @@
   --card-bg: #f8fafc;
 }
 
-/* Base */
+/* Page */
 body {
   margin: 0;
   padding: 0;
@@ -24,13 +24,12 @@ body {
   color: var(--text-strong);
 }
 
-/* Banner */
+/* Banner + container */
 .top-banner {
   background: linear-gradient(90deg, var(--brand-red-deep), #6f1010);
   padding: 28px 0;
   margin-bottom: 24px;
 }
-
 .container {
   max-width: 1100px;
   margin: 0 auto;
@@ -47,7 +46,7 @@ body {
   letter-spacing: -0.5px;
 }
 
-/* Secciones */
+/* Sections */
 h2 {
   font-size: 1.15rem;
   font-weight: 800;
@@ -55,7 +54,7 @@ h2 {
   color: var(--text-strong);
 }
 
-/* Cards */
+/* Chart & table cards */
 .chart-wrapper,
 .table-wrapper {
   background: var(--card-bg);
@@ -65,52 +64,70 @@ h2 {
   margin-bottom: 1.2rem;
 }
 
-/* Standings */
+/* Standings columns container */
+.standings-columns {
+  display: flex;
+  gap: 18px;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+  flex-wrap: wrap; /* wrap on small screens */
+}
+
+/* Each standings list card (column) */
 .standings-list {
   list-style: none;
-  margin: 0 0 1.2rem 0;
-  padding: 0;
+  margin: 0;
+  padding: 0.5rem;
   background: var(--card-bg);
   border: 1px solid rgba(11,18,32,0.06);
   border-radius: 8px;
   overflow: hidden;
-  counter-reset: rank;
+  min-width: 180px;
+  max-width: 260px;
 }
 
+/* Item: add gap so name and score are separated */
 .standings-item {
   display: flex;
   align-items: center;
-  padding: 0.65rem 1rem;
-  border-bottom: 1px solid rgba(11,18,32,0.05);
-  counter-increment: rank;
+  gap: 22px;              /* larger gap between name and score */
+  padding: 0.6rem 0.8rem;
+  border-bottom: 1px solid rgba(11,18,32,0.04);
 }
 
-.standings-item:last-child {
-  border-bottom: none;
-}
+.standings-item:last-child { border-bottom: none; }
 
-.standings-item::before {
-  content: counter(rank) ".";
-  min-width: 2rem;
+/* Rank number on left */
+.standings-rank {
+  min-width: 2.2rem;
+  text-align: left;
   font-weight: 700;
   color: var(--muted-gray);
+  margin-right: 6px;
+  flex: 0 0 auto;
 }
 
-/* Nombre mismo color que fechas */
+/* Name uses muted-gray (same as dates) */
 .standings-name {
-  flex: 1;
+  flex: 1 1 auto;
   font-weight: 700;
   color: var(--muted-gray) !important;
+  margin-right: 6px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-/* Puntaje en rojo */
+/* Score aligned to right, with fixed min-width to avoid crowding */
 .standings-score {
   font-weight: 800;
   color: var(--brand-red);
+  min-width: 36px;
   text-align: right;
+  flex: 0 0 36px;
 }
 
-/* Tabla */
+/* Table visuals */
 table {
   width: 100%;
   border-collapse: collapse;
@@ -130,31 +147,34 @@ tbody td {
   color: var(--muted-gray) !important;
 }
 
-/* Fechas */
+/* Dates color */
 tbody td:first-child {
   font-weight: 700;
   color: var(--muted-gray) !important;
 }
 
-/* Números más oscuros */
+/* Numeric cells darker for legibility */
 td.numeric {
   text-align: right;
   font-weight: 700;
   color: var(--text-strong) !important;
 }
 
-tbody tr:nth-child(even) td {
-  background: rgba(11,18,32,0.015);
-}
+/* Alternate rows */
+tbody tr:nth-child(even) td { background: rgba(11,18,32,0.015); }
+tbody tr:hover td { background: rgba(11,18,32,0.03); }
 
-tbody tr:hover td {
-  background: rgba(11,18,32,0.03);
-}
+/* ensure pandas table id does not override styles */
+#score-table, #score-table * { background: transparent !important; border: none !important; }
 
-/* Footer */
-footer {
-  margin-top: 2rem;
-  text-align: center;
-  color: var(--muted-gray);
-  font-size: 0.9rem;
+/* Responsive: stack columns on narrow screens */
+@media (max-width: 720px) {
+  .standings-columns {
+    flex-direction: column;
+  }
+  .standings-list {
+    width: 100%;
+    min-width: auto;
+    max-width: 100%;
+  }
 }
