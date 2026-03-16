@@ -138,18 +138,47 @@ else:
 
 # -------- Chart (first) --------
 st.markdown("<h2>Puntaje a lo largo del tiempo</h2>", unsafe_allow_html=True)
+
 if not cum.empty and cum.shape[1] > 0:
-    cum_reset = cum.reset_index().melt(id_vars=[date_col], var_name="Name", value_name="Cumulative")
-    cum_reset[date_col] = pd.to_datetime(cum_reset[date_col])
-    chart = alt.Chart(cum_reset).mark_line().encode(
-        x=alt.X(date_col, title="Fecha", axis=alt.Axis(format='%Y-%m-%d')),
-        y=alt.Y("Cumulative", title="Puntos acumulados"),
-        color=alt.Color("Name:N", legend=alt.Legend(title="Participante")),
-        tooltip=[date_col, "Name", "Cumulative"]
-    ).properties(height=360)
-    st.markdown('<div class="chart-wrapper">', unsafe_allow_html=True)
-    st.altair_chart(chart, use_container_width=True)
-    st.markdown('</div>', unsafe_allow_html=True)
+    # Determinar "hoy" en la zona horaria del usuario, con fallback si pytz no está disponible
+    try:
+        import pytz
+        today_ts = pd.Timestamp.now(tz=pytz.timezone("America/Argentina/Buenos_Aires")).normalize()
+    except Exception:
+        # Fallback: usar la fecha del sistema (normalizada)
+        today_ts = pd.Timestamp.now().normalize()
+
+    # Filtrar columnas (participantes) que tengan algún punto en el total final (>0)
+    latest_totals = cum.iloc[-1]  # últimos acumulados por participante
+    positive_names = latest_totals[latest_totals > 0].index.tolist()
+
+    if len(positive_names) == 0:
+        st.info("No hay participantes con puntos (todos tienen 0). El gráfico no se mostrará.")
+    else:
+        # Construir DataFrame 'long' solo con participantes positivos
+        cum_pos = cum[positive_names].reset_index().melt(id_vars=[date_col], var_name="Name", value_name="Cumulative")
+        cum_pos[date_col] = pd.to_datetime(cum_pos[date_col])
+
+        # Filtrar solo eventos hasta hoy (inclusive)
+        cum_pos = cum_pos[cum_pos[date_col] <= today_ts]
+
+        if cum_pos.empty:
+            st.info("No hay eventos hasta la fecha actual para los participantes con puntos.")
+        else:
+            # Opcional: ordenar names por su total final descendente para consistencia de colores/leyenda
+            order = latest_totals[positive_names].sort_values(ascending=False).index.tolist()
+            color_scale = alt.Color("Name:N", sort=order, legend=alt.Legend(title="Participante"))
+
+            chart = alt.Chart(cum_pos).mark_line(interpolate="monotone").encode(
+                x=alt.X(date_col, title="Fecha", axis=alt.Axis(format='%Y-%m-%d')),
+                y=alt.Y("Cumulative:Q", title="Puntos acumulados"),
+                color=color_scale,
+                tooltip=[date_col, "Name", alt.Tooltip("Cumulative:Q", format=".2f")]
+            ).properties(height=360)
+
+            st.markdown('<div class="chart-wrapper">', unsafe_allow_html=True)
+            st.altair_chart(chart, use_container_width=True)
+            st.markdown('</div>', unsafe_allow_html=True)
 else:
     st.info("No hay datos de puntaje suficientes para generar el gráfico.")
 
