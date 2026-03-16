@@ -159,8 +159,12 @@ if not cum.empty and cum.shape[1] > 0:
         cum_pos = cum[positive_names].reset_index().melt(id_vars=[date_col], var_name="Name", value_name="Cumulative")
         cum_pos[date_col] = pd.to_datetime(cum_pos[date_col])
 
-        # Filtrar solo eventos hasta hoy (inclusive)
-        cum_pos = cum_pos[cum_pos[date_col] <= today_ts]
+        # --- CORRECCIÓN: comparar solo fechas (objetos date) para evitar errores TZ/naive ---
+        today_date = today_ts.date()
+        # Asegurar que las filas con fecha NaT se excluyan y comparar por .dt.date
+        cum_pos = cum_pos[cum_pos[date_col].notna()]
+        cum_pos = cum_pos[cum_pos[date_col].dt.date <= today_date]
+        # --- fin corrección ---
 
         if cum_pos.empty:
             st.info("No hay eventos hasta la fecha actual para los participantes con puntos.")
