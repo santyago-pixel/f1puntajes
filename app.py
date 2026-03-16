@@ -294,6 +294,52 @@ st.markdown("<h2>Historial completo</h2>", unsafe_allow_html=True)
 def df_to_html_table_with_location(df_in, date_col, location_col, score_cols):
     df_copy = df_in.copy()
     df_copy[date_col] = pd.to_datetime(df_copy[date_col], errors="coerce").dt.strftime("%Y-%m-%d")
+
+    cols = [date_col, location_col] + score_cols
+
+    thead = "<thead><tr>"
+    for c in cols:
+        thead += f"<th style='text-align:left;padding:6px;border-bottom:1px solid #ddd'>{html.escape(str(c))}</th>"
+    thead += "</tr></thead>"
+
+    rows_html = []
+
+    for _, row in df_copy.iterrows():
+        cells = []
+
+        # Fecha
+        cells.append(f"<td style='padding:6px'>{html.escape(str(row[date_col]))}</td>")
+
+        # Lugar
+        cells.append(f"<td style='padding:6px'>{html.escape(str(row[location_col]))}</td>")
+
+        # Puntajes
+        for sc in score_cols:
+            cell_text = ""
+
+            try:
+                v = float(row.get(sc, 0))
+                if v > 0:
+                    cell_text = str(int(v)) if v.is_integer() else str(round(v, 2))
+            except Exception:
+                pass
+
+            cells.append(f"<td style='padding:6px;text-align:right'>{cell_text}</td>")
+
+        rows_html.append("<tr>" + "".join(cells) + "</tr>")
+
+    tbody = "<tbody>" + "\n".join(rows_html) + "</tbody>"
+
+    table_html = f"""
+    <table id="score-table" style="width:100%;border-collapse:collapse">
+        {thead}
+        {tbody}
+    </table>
+    """
+
+    return f'<div class="table-wrapper">{table_html}</div>'
+    df_copy = df_in.copy()
+    df_copy[date_col] = pd.to_datetime(df_copy[date_col], errors="coerce").dt.strftime("%Y-%m-%d")
     cols = [date_col, location_col] + score_cols
     thead = "<thead><tr>" + "".join([f"<th>{html.escape(str(c))}</th>" for c in cols]) + "</tr></thead>"
     rows_html = []
